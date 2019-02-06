@@ -3,9 +3,20 @@
 sudo apt update
 sudo apt -y upgrade
 
-if [ ! -f ~/processing-3.5.3/bin/processing ]; then
+processing_download=processing-3.5.3-linux-armv6hf.tgz
+
+if [ ! -f processing-3.5.3/processing ]; then
   echo "Installing Processing"
-  wget -O processing.tgz http://download.processing.org/processing-3.5.3-linux-armv6hf.tgz
-  tar xvzf processing.tgz
+
+  if [ ! -f $processing_download ]; then
+    echo "Downloading $processing_download"
+    wget http://download.processing.org/$processing_download
+  else
+    echo "Using cached download: $processing_download"
+  fi
+
+  tar xvzf $processing_download
+else
+  echo "Processing already installed"
 fi
 
