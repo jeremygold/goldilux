@@ -41,7 +41,12 @@ fi
 cd libfreenect
 mkdir -p build
 cd build
-cmake -L -DLIBUSB_1_INCLUDE_DIR=/home/pi/libusb/libusb/ -DLIBUSB_1_LIBRARY=/usr/local/lib/libusb-1.0.so ..
+cmake -L \
+	-DLIBUSB_1_INCLUDE_DIR=/home/pi/libusb/libusb/ \
+	-DLIBUSB_1_LIBRARY=/usr/local/lib/libusb-1.0.so \
+	-DBUILD_OPENNI2_DRIVER=ON \
+	-DBUILD_PYTHON3=ON \
+	..
 make && sudo make install
 
 wget https://github.com/OpenKinect/libfreenect/blob/master/platform/linux/udev/51-kinect.rules
