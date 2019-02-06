@@ -38,11 +38,15 @@ Project files for an exhibition at Queenstown LUMA / Wellington LUX festivals.
         IdentityFile ~/.ssh/goldilux_rsa
         User git
 
-* Clone goldilux repo
-    $ git clone git@github.com:jeremygold/goldilux.git
+* Clone goldilux repo and run installation script
 
-* TODO: Install processing
-
+      $ git clone git@github.com:jeremygold/goldilux.git
       $ cd goldilux
       $ ./setup-goldilux.sh
 
+* Run processing (on the PI for gui)
+
+      $ processing-3.5.3/processing &
+
+* Install Kinect support: Sketch -> Import Library... -> Add Library, and filter on Kinect
+* Install "Open Kinect for Processing"

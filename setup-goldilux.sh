@@ -20,3 +20,12 @@ else
   echo "Processing already installed"
 fi
 
+cd ~
+git clone https://github.com/OpenKinect/libfreenect.git
+cd libfreenect
+mkdir build
+cd build
+cmake -L .. # -L lists all the project options
+make && sudo make install
+
+# TODO: Download, build and install libfreenect
