@@ -5,30 +5,18 @@
 # sudo apt -y upgrade
 # sudo apt -y autoremove
 
+sudo apt -y install cmake libudev0 libudev-dev freeglut3 freeglut3-dev libxmu6 libxmu-dev libxi6 libxi-dev
+
 ################################################################################
-##### Download and extract processing #####
-
-processing_download=processing-3.5.3-linux-armv6hf.tgz
-
-if [ ! -f processing-3.5.3/processing ]; then
-  echo "Installing Processing"
-
-  if [ ! -f $processing_download ]; then
-    echo "Downloading $processing_download"
-    wget http://download.processing.org/$processing_download
-  else
-    echo "Using cached download: $processing_download"
-  fi
-
-  tar xvzf $processing_download
+##### Install Processing #####
+if [ ! -f /usr/local/bin/processing ]; then
+  curl https://processing.org/download/install-arm.sh | sudo sh
 else
   echo "Processing already installed"
 fi
 
-
 ################################################################################
 ##### Clone, build, and install libusb #####
-
 sudo apt -y install autotools-dev autoconf libtool libudev-dev
 cd ~
 if [ ! -d libusb ]; then
@@ -43,8 +31,6 @@ make && sudo make install
 
 ################################################################################
 ##### Clone, build, and install libfreenect #####
-
-sudo apt -y install cmake
 cd ~
 if [ ! -d libfreenect ]; then
   git clone https://github.com/OpenKinect/libfreenect.git
