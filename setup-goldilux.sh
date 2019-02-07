@@ -5,7 +5,7 @@
 # sudo apt -y upgrade
 # sudo apt -y autoremove
 
-sudo apt -y install cmake libudev0 libudev-dev freeglut3 freeglut3-dev libxmu6 libxmu-dev libxi6 libxi-dev
+sudo apt -y install cmake libudev0 libudev-dev freeglut3 freeglut3-dev libxmu6 libxmu-dev libxi6 libxi-dev cython3 cython
 
 ################################################################################
 ##### Install Processing #####
