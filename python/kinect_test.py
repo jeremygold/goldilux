@@ -56,47 +56,49 @@ def show_depth(warp = False):
         overlay = cv2.bitwise_xor(rgb, image)
         cv2.line(overlay, (0, y_threshold), (w, y_threshold), (255, 0, 0), 3)
 
-        m = cv2.moments(depth)
-        if(m["m00"] > 0):
-            cX = int(m["m10"] / m["m00"])
-            cY = int(m["m01"] / m["m00"])
-        
-            location = str(cX) + "," + str(cY)
-            cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
-            cv2.putText(overlay, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+        contours, heirarchy = cv2.findContours(depth, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        for c in contours:
+            m = cv2.moments(c)
+            if(m["m00"] > 0):
+                cX = int(m["m10"] / m["m00"])
+                cY = int(m["m01"] / m["m00"])
+            
+                location = str(cX) + "," + str(cY)
+                cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
+                cv2.putText(overlay, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
 
-            if(last_note >= 0):
-                # Already playing a note
-                if(cY > y_threshold):
-                    # Center is below line, stop playing
-                    client.publish("note-off", last_note)
-                    last_note = -1
+                if(last_note >= 0):
+                    # Already playing a note
+                    if(cY > y_threshold):
+                        # Center is below line, stop playing
+                        client.publish("note-off", last_note)
+                        last_note = -1
+                    else:
+                        # Center is still above the line, leave current note
+                        client.publish("note-off", last_note)
+                        note = int(map_range((0, w), (88, 0), cX))
+                        # Only change if we've moved by 2 semitones
+                        if(abs(note - last_note) > 2):
+                            last_note = note
+                            client.publish("note-on", note)
+                        pass
                 else:
-                    # Center is still above the line, leave current note
-                    client.publish("note-off", last_note)
-                    note = int(map_range((0, w), (88, 0), cX))
-                    # Only change if we've moved by 2 semitones
-                    if(abs(note - last_note) > 2):
+                    # No active note
+                    if(cY < y_threshold):
+                        # Center is above the line, start a new note
+                        note = int(map_range((0, w), (88, 0), cX))
                         last_note = note
                         client.publish("note-on", note)
-                    pass
-            else:
-                # No active note
-                if(cY < y_threshold):
-                    # Center is above the line, start a new note
-                    note = int(map_range((0, w), (88, 0), cX))
-                    last_note = note
-                    client.publish("note-on", note)
 
-                else:
-                    # Center is below the line, don't start anything
-                    pass
+                    else:
+                        # Center is below the line, don't start anything
+                        pass
 
-#        detector = cv2.SimpleBlobDetector()
-#        keypoints = detector.detect(depth)
-#        print("Detected " + str(keypoints))
-#
-#        overlay_with_keypoints = cv2.drawKeypoints(depth, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    #        detector = cv2.SimpleBlobDetector()
+    #        keypoints = detector.detect(depth)
+    #        print("Detected " + str(keypoints))
+    #
+    #        overlay_with_keypoints = cv2.drawKeypoints(depth, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
         if(warp):
             src = np.array([
