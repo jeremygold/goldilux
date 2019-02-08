@@ -3,11 +3,13 @@ import freenect
 import cv2
 import frame_convert2
 import numpy as np
+import random
 
 
-threshold = 100
-current_depth = 0
+threshold = 200
+current_depth = 500
 last_image = None
+scale = 1.05
 
 def change_threshold(value):
     global threshold
@@ -18,7 +20,6 @@ def change_depth(value):
     global current_depth
     current_depth = value
 
-
 def show_depth():
     global threshold
     global current_depth
@@ -28,17 +29,25 @@ def show_depth():
     depth = 255 * np.logical_and(depth >= current_depth - threshold,
                                  depth <= current_depth + threshold)
     depth = depth.astype(np.uint8)
+    depth_rgb = cv2.cvtColor(depth, cv2.COLOR_GRAY2RGB)
     h, w = depth.shape[:2]
 
     if(last_image != None):
-        scaled = cv2.resize(last_image, None, fx=1.1, fy=1.1)[0:h,0:w]
+        x_offset = int(w * (scale - 1.0) / 2.0)
+        y_offset = int(h * (scale - 1.0) / 2.0)
+        scaled = cv2.resize(last_image, None, fx=scale, fy=scale)[y_offset:h+y_offset,x_offset:w + x_offset]
 
-        image = cv2.add(scaled, depth)
+        color_img = np.zeros((h, w, 3), dtype=np.uint8)
+        color_img[:, :] = [random.randint(1,255), random.randint(1,255), random.randint(1,255)]
 
-        last_image = cv2.bitwise_not(image)
+        color_scale = cv2.bitwise_and(color_img, scaled)
+        image = cv2.bitwise_or(color_scale, depth_rgb)
+
+        last_image = image
         cv2.imshow('Depth', image)
+
     else:
-        last_image = depth
+        last_image = depth_rgb
 
 
 def show_video():
@@ -46,7 +55,7 @@ def show_video():
 
 
 cv2.namedWindow('Depth')
-cv2.namedWindow('Video')
+# cv2.namedWindow('Video')
 cv2.createTrackbar('threshold', 'Depth', threshold,     500,  change_threshold)
 cv2.createTrackbar('depth',     'Depth', current_depth, 2048, change_depth)
 
