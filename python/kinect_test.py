@@ -4,17 +4,18 @@ import cv2
 import frame_convert2
 import numpy as np
 import random
+import paho.mqtt.client as mqtt
 
 
 threshold = 200
 current_depth = 500
 last_image = None
 scale = 1.05
+client = None
 
 def change_threshold(value):
     global threshold
     threshold = value
-
 
 def change_depth(value):
     global current_depth
@@ -24,6 +25,7 @@ def show_depth(warp = False):
     global threshold
     global current_depth
     global last_image
+    global client
 
     depth, timestamp = freenect.sync_get_depth()
     rgb = frame_convert2.video_cv(freenect.sync_get_video()[0])
@@ -45,6 +47,21 @@ def show_depth(warp = False):
         image = cv2.bitwise_or(color_scale, depth_rgb)
 
         overlay = cv2.bitwise_xor(rgb, image)
+
+        m = cv2.moments(depth)
+        cX = int(m["m10"] / m["m00"])
+        cY = int(m["m01"] / m["m00"])
+
+        cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
+
+        client.publish("test", int(cX / 4.0))
+
+        
+#        detector = cv2.SimpleBlobDetector()
+#        keypoints = detector.detect(depth)
+#        print("Detected " + str(keypoints))
+#
+#        overlay_with_keypoints = cv2.drawKeypoints(depth, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
         if(warp):
             src = np.array([
@@ -72,6 +89,15 @@ def show_depth(warp = False):
     else:
         last_image = depth_rgb
 
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code: " + str(rc))
+
+def init_mqtt():
+    global client
+    client = mqtt.Client()
+    client.on_connect = on_connect
+    client.connect('192.168.1.105', 1883, 60)
+    client.loop_start()
 
 cv2.namedWindow('Depth')
 # cv2.namedWindow('Video')
@@ -80,6 +106,7 @@ cv2.createTrackbar('depth',     'Depth', current_depth, 2048, change_depth)
 
 print('Press ESC in window to stop')
 
+init_mqtt()
 
 while 1:
     show_depth()
