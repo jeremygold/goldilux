@@ -1,0 +1,10 @@
+mqtt:
+    image: eclipse-mosquitto:latest
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+#    volumes:
+#      - /opt/conf/mqtt/config:/mosquitto/config
+#      - /opt/conf/mqtt/data:/mosquitto/data
+#      - /opt/conf/mqtt/log:/mosquitto/log
