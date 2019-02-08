@@ -1,22 +1,30 @@
 #!/usr/bin/env bash
 
+# Reference: https://naman5.wordpress.com/2014/06/24/experimenting-with-kinect-using-opencv-python-and-open-kinect-libfreenect/
+
 # FIXME - bring these back for full script
 # sudo apt update
 # sudo apt -y upgrade
 # sudo apt -y autoremove
 
-sudo apt -y install cmake libudev0 libudev-dev freeglut3 freeglut3-dev libxmu6 libxmu-dev libxi6 libxi-dev cython3 cython
+sudo apt -y install cmake pkg-config build-essential libudev0 \
+	libudev-dev freeglut3 freeglut3-dev libxmu6 libxmu-dev libxi6 \
+	libxi-dev cython3 cython python3-dev python3-numpy \
+	python-opencv
 
 ################################################################################
 ##### Install Processing #####
-if [ ! -f /usr/local/bin/processing ]; then
-  curl https://processing.org/download/install-arm.sh | sudo sh
-else
-  echo "Processing already installed"
-fi
+# if [ ! -f /usr/local/bin/processing ]; then
+#   curl https://processing.org/download/install-arm.sh | sudo sh
+# else
+#   echo "Processing already installed"
+# fi
 
 ################################################################################
 ##### Clone, build, and install libusb #####
+# TODO: From tutorial above, can I just:
+# sudo apt-get install libusb-1.0-0-dev
+
 sudo apt -y install autotools-dev autoconf libtool libudev-dev
 cd ~
 if [ ! -d libusb ]; then
@@ -48,7 +56,14 @@ cmake -L \
 	-DBUILD_PYTHON3=ON \
 	..
 make && sudo make install
+sudo ldconfig /usr/local/lib64/
 
-wget https://github.com/OpenKinect/libfreenect/blob/master/platform/linux/udev/51-kinect.rules
+cd ~/libfreenect/wrappers/python
+sudo python setup.py install
+
+sudo adduser $USER video
+sudo adduser $USER plugdev
+
+wget https://github.com/OpenKinect/libfreenect/raw/master/platform/linux/udev/51-kinect.rules
 sudo mv 51-kinect.rules /etc/udev/rules.d/
 
