@@ -20,12 +20,13 @@ def change_depth(value):
     global current_depth
     current_depth = value
 
-def show_depth():
+def show_depth(warp = False):
     global threshold
     global current_depth
     global last_image
 
     depth, timestamp = freenect.sync_get_depth()
+    rgb = frame_convert2.video_cv(freenect.sync_get_video()[0])
     depth = 255 * np.logical_and(depth >= current_depth - threshold,
                                  depth <= current_depth + threshold)
     depth = depth.astype(np.uint8)
@@ -43,15 +44,33 @@ def show_depth():
         color_scale = cv2.bitwise_and(color_img, scaled)
         image = cv2.bitwise_or(color_scale, depth_rgb)
 
+        overlay = cv2.bitwise_xor(rgb, image)
+
+        if(warp):
+            src = np.array([
+                [0,0],
+                [w-1,0],
+                [w-1,h-1],
+                [0,h-1]], dtype= "float32")
+
+            dst = np.array([
+                [150,50],
+                [w-1,0],
+                [w-1,h-1],
+                [150,h-51]], dtype= "float32")
+
+            M = cv2.getPerspectiveTransform(src, dst)
+
+            warped = cv2.warpPerspective(overlay, M, (w, h))
+
+            cv2.imshow('Depth', warped)
+        else:
+            cv2.imshow('Depth', overlay)
+
         last_image = image
-        cv2.imshow('Depth', image)
 
     else:
         last_image = depth_rgb
-
-
-def show_video():
-    cv2.imshow('Video', frame_convert2.video_cv(freenect.sync_get_video()[0]))
 
 
 cv2.namedWindow('Depth')
@@ -64,6 +83,5 @@ print('Press ESC in window to stop')
 
 while 1:
     show_depth()
-    # show_video()
     if cv2.waitKey(10) == 27:
         break
