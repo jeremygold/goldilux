@@ -6,7 +6,6 @@ import numpy as np
 import random
 import paho.mqtt.client as mqtt
 
-
 threshold = 200
 current_depth = 260
 last_image = None
@@ -56,49 +55,59 @@ def show_depth(warp = False):
         overlay = cv2.bitwise_xor(rgb, image)
         cv2.line(overlay, (0, y_threshold), (w, y_threshold), (255, 0, 0), 3)
 
-        contours, heirarchy = cv2.findContours(depth, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        for c in contours:
-            m = cv2.moments(c)
-            if(m["m00"] > 0):
-                cX = int(m["m10"] / m["m00"])
-                cY = int(m["m01"] / m["m00"])
-            
-                location = str(cX) + "," + str(cY)
-                cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
-                cv2.putText(overlay, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+        params = cv2.SimpleBlobDetector_Params()
+        params.minThreshold = 0
+        params.maxThreshold = 255
+        params.minArea = 200
+        params.maxArea = w * h
+        params.filterByArea = True
 
-                if(last_note >= 0):
-                    # Already playing a note
-                    if(cY > y_threshold):
-                        # Center is below line, stop playing
-                        client.publish("note-off", last_note)
-                        last_note = -1
-                    else:
-                        # Center is still above the line, leave current note
-                        client.publish("note-off", last_note)
-                        note = int(map_range((0, w), (88, 0), cX))
-                        # Only change if we've moved by 2 semitones
-                        if(abs(note - last_note) > 2):
-                            last_note = note
-                            client.publish("note-on", note)
-                        pass
+        params.filterByCircularity = False
+        params.filterByConvexity = False
+        params.filterByColor = False
+        params.filterByInertia = False
+
+        detector = cv2.SimpleBlobDetector(params)
+        keypoints = detector.detect(depth)
+        print("Detected " + str(len(keypoints)))
+
+        # overlay_with_keypoints = cv2.drawKeypoints(overlay, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+        for keypoint in keypoints:
+            cX = int(keypoint.pt[0])
+            cY = int(keypoint.pt[1])
+                
+            location = str(cX) + "," + str(cY)
+            cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
+            cv2.putText(overlay, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+
+            if(last_note >= 0):
+                # Already playing a note
+                if(cY > y_threshold):
+                    # Center is below line, stop playing
+                    client.publish("note-off", last_note)
+                    last_note = -1
                 else:
-                    # No active note
-                    if(cY < y_threshold):
-                        # Center is above the line, start a new note
-                        note = int(map_range((0, w), (88, 0), cX))
+                    # Center is still above the line, leave current note
+                    client.publish("note-off", last_note)
+                    note = int(map_range((0, w), (88, 0), cX))
+                    # Only change if we've moved by 2 semitones
+                    if(abs(note - last_note) > 2):
                         last_note = note
                         client.publish("note-on", note)
+                    pass
+            else:
+                # No active note
+                if(cY < y_threshold):
+                    # Center is above the line, start a new note
+                    note = int(map_range((0, w), (88, 0), cX))
+                    last_note = note
+                    client.publish("note-on", note)
 
-                    else:
-                        # Center is below the line, don't start anything
-                        pass
+                else:
+                    # Center is below the line, don't start anything
+                    pass
 
-    #        detector = cv2.SimpleBlobDetector()
-    #        keypoints = detector.detect(depth)
-    #        print("Detected " + str(keypoints))
-    #
-    #        overlay_with_keypoints = cv2.drawKeypoints(depth, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
         if(warp):
             src = np.array([
