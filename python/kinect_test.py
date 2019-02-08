@@ -13,6 +13,7 @@ last_image = None
 scale = 1.05
 client = None
 y_threshold = 200
+last_note = -1
 
 def change_threshold(value):
     global threshold
@@ -31,6 +32,7 @@ def show_depth(warp = False):
     global current_depth
     global last_image
     global client
+    global last_note
 
     depth, timestamp = freenect.sync_get_depth()
     rgb = frame_convert2.video_cv(freenect.sync_get_video()[0])
@@ -63,11 +65,30 @@ def show_depth(warp = False):
             cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
             cv2.putText(overlay, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
 
-            if(cY < y_threshold):
-                note = int(map_range((0, w), (88, 0), cX))
-                
-                client.publish("test", note)
+            if(last_note >= 0):
+                # Already playing a note
+                if(cY > y_threshold):
+                    # Center is below line, stop playing
+                    client.publish("note-off", last_note)
+                    last_note = -1
+                else:
+                    # Center is still above the line, leave current note
+                    client.publish("note-off", last_note)
+                    note = int(map_range((0, w), (88, 0), cX))
+                    last_note = note
+                    client.publish("note-on", note)
+                    pass
+            else:
+                # No active note
+                if(cY < y_threshold):
+                    # Center is above the line, start a new note
+                    note = int(map_range((0, w), (88, 0), cX))
+                    last_note = note
+                    client.publish("note-on", note)
 
+                else:
+                    # Center is below the line, don't start anything
+                    pass
 
 #        detector = cv2.SimpleBlobDetector()
 #        keypoints = detector.detect(depth)
