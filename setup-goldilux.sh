@@ -61,6 +61,8 @@ sudo ldconfig /usr/local/lib64/
 cd ~/libfreenect/wrappers/python
 sudo python setup.py install
 
+sudo pip install paho-mqtt
+
 sudo adduser $USER video
 sudo adduser $USER plugdev
 
