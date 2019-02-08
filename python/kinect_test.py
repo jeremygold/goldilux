@@ -75,8 +75,10 @@ def show_depth(warp = False):
                     # Center is still above the line, leave current note
                     client.publish("note-off", last_note)
                     note = int(map_range((0, w), (88, 0), cX))
-                    last_note = note
-                    client.publish("note-on", note)
+                    # Only change if we've moved by 2 semitones
+                    if(abs(note - last_note) > 2):
+                        last_note = note
+                        client.publish("note-on", note)
                     pass
             else:
                 # No active note
