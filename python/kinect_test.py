@@ -8,10 +8,11 @@ import paho.mqtt.client as mqtt
 
 
 threshold = 200
-current_depth = 500
+current_depth = 260
 last_image = None
 scale = 1.05
 client = None
+y_threshold = 200
 
 def change_threshold(value):
     global threshold
@@ -20,6 +21,10 @@ def change_threshold(value):
 def change_depth(value):
     global current_depth
     current_depth = value
+
+def map_range(a, b, s):
+    (a1, a2), (b1, b2) = a, b
+    return b1 + ((s - a1) * (b2 - b1) / (a2 - a1))
 
 def show_depth(warp = False):
     global threshold
@@ -47,16 +52,23 @@ def show_depth(warp = False):
         image = cv2.bitwise_or(color_scale, depth_rgb)
 
         overlay = cv2.bitwise_xor(rgb, image)
+        cv2.line(overlay, (0, y_threshold), (w, y_threshold), (255, 0, 0), 3)
 
         m = cv2.moments(depth)
-        cX = int(m["m10"] / m["m00"])
-        cY = int(m["m01"] / m["m00"])
-
-        cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
-
-        client.publish("test", int(cX / 4.0))
-
+        if(m["m00"] > 0):
+            cX = int(m["m10"] / m["m00"])
+            cY = int(m["m01"] / m["m00"])
         
+            location = str(cX) + "," + str(cY)
+            cv2.circle(overlay, (cX, cY), 15, (255, 0, 255), -1)
+            cv2.putText(overlay, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+
+            if(cY < y_threshold):
+                note = int(map_range((0, w), (88, 0), cX))
+                
+                client.publish("test", note)
+
+
 #        detector = cv2.SimpleBlobDetector()
 #        keypoints = detector.detect(depth)
 #        print("Detected " + str(keypoints))
