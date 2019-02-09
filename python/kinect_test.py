@@ -6,12 +6,12 @@ import numpy as np
 import random
 import paho.mqtt.client as mqtt
 
-threshold = 200
+threshold = 400
 current_depth = 260
 last_image = None
 scale = 1.05
 client = None
-y_threshold = 200
+y_threshold = 300
 last_note = -1
 
 def change_threshold(value):
@@ -53,7 +53,7 @@ def show_depth(warp = False):
         image = cv2.bitwise_or(color_scale, depth_rgb)
 
         overlay = cv2.bitwise_xor(rgb, image)
-        cv2.line(overlay, (0, y_threshold), (w, y_threshold), (255, 0, 0), 3)
+        cv2.line(overlay, (0, y_threshold), (w, y_threshold), (0, 255, 0), 3)
 
         params = cv2.SimpleBlobDetector_Params()
         params.minThreshold = 0
