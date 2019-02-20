@@ -15,22 +15,23 @@ def on_connect(client, userdata, flags, rc):
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     # client.subscribe("$SYS/#")
-    client.subscribe("test")
+    client.subscribe("note-on")
+    client.subscribe("note-off")
 
 # The callback for when a PUBLISH message is received from the server.
 
 
 def on_message(client, userdata, msg):
     global midiout
-    print(msg.topic + " " + str(msg.payload))
+    print(msg.topic + ": " + str(msg.payload))
 
-    # channel 1, middle C, velocity 112
-    note_on = [0x90, int(msg.payload), 112]
-    note_off = [0x80, int(msg.payload), 0]
+    if(msg.topic == "note-on"):
+        note_on = [0x90, int(msg.payload), 112]
+        midiout.send_message(note_on)
 
-    midiout.send_message(note_on)
-    time.sleep(0.1)
-    midiout.send_message(note_off)
+    if(msg.topic == "note-off"):
+        note_off = [0x80, int(msg.payload), 0]
+        midiout.send_message(note_off)
 
 
 def init_midi():

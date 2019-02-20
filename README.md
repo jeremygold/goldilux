@@ -7,8 +7,8 @@ Project files for an exhibition at Queenstown LUMA / Wellington LUX festivals.
 
       $ sudo raspi-config
 
-* Set the hostname to goldilux2 (or whatever is the next number)
-* Expand the filesystem
+* Set the hostname to goldiluxX (where X is the next number)
+* Expand the filesystem (Might be done automatically on first boot)
 * Enable ssh
 
 * Copy goldilux keys to rpi (From another machine, assuming they're in ~/.ssh)

@@ -36,10 +36,7 @@
             <taskproperty id="tpd9" name="predecessorsr" type="default" valuetype="text"/>
         </taskproperties>
         <task id="14" name="Overview" meeting="false" start="2019-02-04" duration="86" complete="0" expand="true">
-            <task id="2" name="Initial Proof of concept" color="#8cb6ce" meeting="false" start="2019-02-04" duration="11" complete="0" thirdDate="2019-04-22" thirdDate-constraint="0" expand="true">
-                <depend id="4" type="2" difference="0" hardness="Strong"/>
-            </task>
-            <task id="4" name="BuiBuild everything ld everything" color="#8cb6ce" meeting="false" start="2019-02-19" duration="59" complete="0" thirdDate="2019-02-04" thirdDate-constraint="0" expand="true">
+            <task id="4" name="Build everything" color="#8cb6ce" meeting="false" start="2019-02-04" duration="70" complete="0" thirdDate="2019-02-04" thirdDate-constraint="0" expand="true">
                 <depend id="10" type="2" difference="0" hardness="Strong"/>
             </task>
             <task id="10" name="Test everything" color="#8cb6ce" meeting="false" start="2019-05-13" duration="14" complete="0" thirdDate="2019-02-04" thirdDate-constraint="0" expand="true"/>
