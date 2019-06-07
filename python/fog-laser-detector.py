@@ -6,14 +6,17 @@ import threading
 client = None
 lastNote = None
 note1On = False
+width = 500
 
-# The callback for when the client receives a CONNACK response from the server.
+noteOn = {
+    "Note1": False,
+    "Note2": False,
+    "Note3": False
+}
 
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-
-# The callback for when a PUBLISH message is received from the server.
 
 
 def on_message(client, userdata, msg):
@@ -43,21 +46,40 @@ def init_mqtt():
 def init():
     cv2.namedWindow('Laser')
     cv2.createTrackbar("Threshold", "Laser", 0, 255, nothing)
-    cv2.setTrackbarPos("Threshold", "Laser", 180)
+    cv2.setTrackbarPos("Threshold", "Laser", 100)
 
     cv2.createTrackbar("Note1", "Laser", 0, 1024, nothing)
-    cv2.setTrackbarPos("Note1", "Laser", 290)
+    cv2.setTrackbarPos("Note1", "Laser", 276)
 
     cv2.createTrackbar("Note2", "Laser", 0, 1024, nothing)
-    cv2.setTrackbarPos("Note2", "Laser", 390)
+    cv2.setTrackbarPos("Note2", "Laser", 338)
 
     cv2.createTrackbar("Note3", "Laser", 0, 1024, nothing)
-    cv2.setTrackbarPos("Note3", "Laser", 490)
+    cv2.setTrackbarPos("Note3", "Laser", 425)
 
 
 def noteOff(note):
     global client
     client.publish("note-off", note)
+
+
+def checkNote(thresh, slider, note):
+    noteY = cv2.getTrackbarPos(slider, "Laser")
+    noteCrop = thresh[noteY:noteY+50, 0:width]
+    noteSum = cv2.countNonZero(noteCrop)
+
+    if noteOn[slider] == False:
+        if noteSum < 100:
+            print("Playing note: " + str(note) + "sum: " + str(noteSum))
+            noteOn[slider] = True
+            client.publish("note-on", note)
+
+    if noteSum > 100:
+        print("Stopping note: " + str(note) + "sum: " + str(noteSum))
+        noteOn[slider] = False
+        client.publish("note-off", note)
+
+    return noteY
 
 
 def show_webcam():
@@ -75,28 +97,16 @@ def show_webcam():
         b, g, r = cv2.split(img)
 
         thresh = cv2.getTrackbarPos("Threshold", "Laser")
-        note1Y = cv2.getTrackbarPos("Note1", "Laser")
-
         ret, thresh1 = cv2.threshold(r, thresh, 255, cv2.THRESH_BINARY)
 
-        note1Crop = thresh1[note1Y:note1Y+50, 0:1280]
-        note1Sum = cv2.countNonZero(note1Crop)
+        note1Y = checkNote(thresh1, "Note1", 60)
+        note2Y = checkNote(thresh1, "Note2", 65)
+        note3Y = checkNote(thresh1, "Note3", 72)
 
-        lastNote = 60
-        if note1On == False:
-            if note1Sum < 100:
-                print("Playing note: " + str(note1Sum))
-                note1On = True
-                client.publish("note-on", lastNote)
+        cv2.rectangle(thresh1, (0, note1Y), (width, note1Y + 50), (255), 2)
+        cv2.rectangle(thresh1, (0, note2Y), (width, note2Y + 50), (255), 2)
+        cv2.rectangle(thresh1, (0, note3Y), (width, note3Y + 50), (255), 2)
 
-        if note1Sum > 100:
-            print("Stopping note: " + str(note1Sum))
-            note1On = False
-            client.publish("note-off", lastNote)
-
-        # print("Note1Sum: " + str(note1Sum))
-
-        cv2.rectangle(thresh1, (0, note1Y), (1280, note1Y + 50), (255), 2)
         cv2.imshow('Laser', thresh1)
 
         key = cv2.waitKey(1)
