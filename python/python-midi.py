@@ -52,7 +52,7 @@ def init_mqtt():
     client.on_connect = on_connect
     client.on_message = on_message
 
-    client.connect("192.168.1.105", 1883, 60)
+    client.connect("192.168.1.229", 1883, 60)
 
     # Blocking call that processes network traffic, dispatches callbacks and
     # handles reconnecting.
