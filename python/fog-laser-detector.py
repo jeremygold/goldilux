@@ -9,9 +9,10 @@ note1On = False
 width = 500
 midiout = None
 
-imageWidth = 1280
-imageHeight = 1024
-sampleRegion = 50
+imageWidth = 640
+imageHeight = 480
+sampleRegion = 25
+threshold = 50
 
 noteOnFlags = {
     "Note1": False,
@@ -38,20 +39,20 @@ def init_midi():
 
 
 def createRegionControls(note, x, y):
-    cv2.createTrackbar(note + "Y", "Laser", 0, imageHeight, nothing)
-    cv2.setTrackbarPos(note + "Y", "Laser", x)
     cv2.createTrackbar(note + "X", "Laser", 0, imageWidth, nothing)
-    cv2.setTrackbarPos(note + "X", "Laser", y)
+    cv2.setTrackbarPos(note + "X", "Laser", x)
+    cv2.createTrackbar(note + "Y", "Laser", 0, imageHeight, nothing)
+    cv2.setTrackbarPos(note + "Y", "Laser", y)
 
 
 def init():
     cv2.namedWindow('Laser')
     cv2.createTrackbar("Threshold", "Laser", 0, 255, nothing)
-    cv2.setTrackbarPos("Threshold", "Laser", 211)
+    cv2.setTrackbarPos("Threshold", "Laser", 111)
 
-    createRegionControls("Note1", 311, 651)
-    createRegionControls("Note2", 381, 569)
-    createRegionControls("Note3", 485, 621)
+    createRegionControls("Note1", 335, 106)
+    createRegionControls("Note2", 277, 161)
+    createRegionControls("Note3", 312, 216)
 
 
 def noteOn(note):
@@ -67,19 +68,20 @@ def noteOff(note):
 
 
 def checkNote(thresh, slider, note):
-    noteY = cv2.getTrackbarPos(slider + "Y", "Laser")
+    global threshold
     noteX = cv2.getTrackbarPos(slider + "X", "Laser")
+    noteY = cv2.getTrackbarPos(slider + "Y", "Laser")
 
     noteCrop = thresh[noteY:noteY + sampleRegion, noteX:noteX + sampleRegion]
     noteSum = cv2.countNonZero(noteCrop)
 
     if noteOnFlags[slider] == False:
-        if noteSum < 100:
+        if noteSum < threshold:
             print("Playing note: " + str(note) + "sum: " + str(noteSum))
             noteOnFlags[slider] = True
             noteOn(note)
 
-    if noteSum > 100:
+    if noteSum > threshold:
         # print("Stopping note: " + str(note) + "sum: " + str(noteSum))
         noteOnFlags[slider] = False
         noteOff(note)
