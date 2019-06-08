@@ -1,85 +1,90 @@
-#!/usr/bin/env python3
-import cv2
-import paho.mqtt.client as mqtt
+#!venv/bin/python3
 import threading
+import cv2
+import rtmidi
 
 client = None
 lastNote = None
 note1On = False
 width = 500
+midiout = None
 
-noteOn = {
+imageWidth = 1280
+imageHeight = 1024
+sampleRegion = 50
+
+noteOnFlags = {
     "Note1": False,
     "Note2": False,
     "Note3": False
 }
 
 
-def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
-
-
-def on_message(client, userdata, msg):
-    global midiout
-    print(msg.topic + ": " + str(msg.payload))
-
-
 def nothing(x):
     pass
 
 
-def init_mqtt():
-    global client
-    client = mqtt.Client()
-    client.on_connect = on_connect
-    client.on_message = on_message
+def init_midi():
+    global midiout
+    midiout = rtmidi.MidiOut()
+    available_ports = midiout.get_ports()
+    print("Available ports: " + str(available_ports))
 
-    client.connect("192.168.1.229", 1883, 60)
+    if available_ports:
+        midiout.open_port(0)
+        print("Opened MIDI port " + str(available_ports))
+    else:
+        midiout.open_virtual_port("My virtual output")
 
-    # Blocking call that processes network traffic, dispatches callbacks and
-    # handles reconnecting.
-    # Other loop*() functions are available that give a threaded interface and a
-    # manual interface.
-    client.loop_start()
+
+def createRegionControls(note, x, y):
+    cv2.createTrackbar(note + "Y", "Laser", 0, imageHeight, nothing)
+    cv2.setTrackbarPos(note + "Y", "Laser", x)
+    cv2.createTrackbar(note + "X", "Laser", 0, imageWidth, nothing)
+    cv2.setTrackbarPos(note + "X", "Laser", y)
 
 
 def init():
     cv2.namedWindow('Laser')
     cv2.createTrackbar("Threshold", "Laser", 0, 255, nothing)
-    cv2.setTrackbarPos("Threshold", "Laser", 100)
+    cv2.setTrackbarPos("Threshold", "Laser", 211)
 
-    cv2.createTrackbar("Note1", "Laser", 0, 1024, nothing)
-    cv2.setTrackbarPos("Note1", "Laser", 276)
+    createRegionControls("Note1", 311, 651)
+    createRegionControls("Note2", 381, 569)
+    createRegionControls("Note3", 485, 621)
 
-    cv2.createTrackbar("Note2", "Laser", 0, 1024, nothing)
-    cv2.setTrackbarPos("Note2", "Laser", 338)
 
-    cv2.createTrackbar("Note3", "Laser", 0, 1024, nothing)
-    cv2.setTrackbarPos("Note3", "Laser", 425)
+def noteOn(note):
+    global midiout
+    note_on = [0x90, int(note), 112]
+    midiout.send_message(note_on)
 
 
 def noteOff(note):
-    global client
-    client.publish("note-off", note)
+    global midiout
+    note_off = [0x80, int(note), 0]
+    midiout.send_message(note_off)
 
 
 def checkNote(thresh, slider, note):
-    noteY = cv2.getTrackbarPos(slider, "Laser")
-    noteCrop = thresh[noteY:noteY+50, 0:width]
+    noteY = cv2.getTrackbarPos(slider + "Y", "Laser")
+    noteX = cv2.getTrackbarPos(slider + "X", "Laser")
+
+    noteCrop = thresh[noteY:noteY + sampleRegion, noteX:noteX + sampleRegion]
     noteSum = cv2.countNonZero(noteCrop)
 
-    if noteOn[slider] == False:
+    if noteOnFlags[slider] == False:
         if noteSum < 100:
             print("Playing note: " + str(note) + "sum: " + str(noteSum))
-            noteOn[slider] = True
-            client.publish("note-on", note)
+            noteOnFlags[slider] = True
+            noteOn(note)
 
     if noteSum > 100:
-        print("Stopping note: " + str(note) + "sum: " + str(noteSum))
-        noteOn[slider] = False
-        client.publish("note-off", note)
+        # print("Stopping note: " + str(note) + "sum: " + str(noteSum))
+        noteOnFlags[slider] = False
+        noteOff(note)
 
-    return noteY
+    return noteX, noteY
 
 
 def show_webcam():
@@ -88,8 +93,8 @@ def show_webcam():
     global note1On
 
     cam = cv2.VideoCapture(0)
-    cam.set(3, 1280)
-    cam.set(4, 1024)
+    cam.set(3, imageWidth)
+    cam.set(4, imageHeight)
 
     while True:
         ret_val, img = cam.read()
@@ -99,13 +104,13 @@ def show_webcam():
         thresh = cv2.getTrackbarPos("Threshold", "Laser")
         ret, thresh1 = cv2.threshold(r, thresh, 255, cv2.THRESH_BINARY)
 
-        note1Y = checkNote(thresh1, "Note1", 60)
-        note2Y = checkNote(thresh1, "Note2", 65)
-        note3Y = checkNote(thresh1, "Note3", 72)
+        note1X, note1Y = checkNote(thresh1, "Note1", 60)
+        note2X, note2Y = checkNote(thresh1, "Note2", 65)
+        note3X, note3Y = checkNote(thresh1, "Note3", 72)
 
-        cv2.rectangle(thresh1, (0, note1Y), (width, note1Y + 50), (255), 2)
-        cv2.rectangle(thresh1, (0, note2Y), (width, note2Y + 50), (255), 2)
-        cv2.rectangle(thresh1, (0, note3Y), (width, note3Y + 50), (255), 2)
+        cv2.rectangle(thresh1, (note1X, note1Y), (note1X + sampleRegion, note1Y + sampleRegion), (255), 1)
+        cv2.rectangle(thresh1, (note2X, note2Y), (note2X + sampleRegion, note2Y + sampleRegion), (255), 1)
+        cv2.rectangle(thresh1, (note3X, note3Y), (note3X + sampleRegion, note3Y + sampleRegion), (255), 1)
 
         cv2.imshow('Laser', thresh1)
 
@@ -127,5 +132,6 @@ def show_webcam():
 
 if __name__ == '__main__':
     init()
-    init_mqtt()
+    init_midi()
     show_webcam()
+    del midiout
