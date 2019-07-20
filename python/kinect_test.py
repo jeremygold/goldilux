@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import freenect
 import cv2
 import frame_convert2
@@ -9,7 +9,7 @@ import paho.mqtt.client as mqtt
 threshold = 400
 current_depth = 260
 last_image = None
-scale = 1.05
+scale = 1.10
 client = None
 y_threshold = 300
 last_note = -1
@@ -41,7 +41,7 @@ def show_depth(warp = False):
     depth_rgb = cv2.cvtColor(depth, cv2.COLOR_GRAY2RGB)
     h, w = depth.shape[:2]
 
-    if(last_image != None):
+    if(not last_image is None):
         x_offset = int(w * (scale - 1.0) / 2.0)
         y_offset = int(h * (scale - 1.0) / 2.0)
         scaled = cv2.resize(last_image, None, fx=scale, fy=scale)[y_offset:h+y_offset,x_offset:w + x_offset]
@@ -71,7 +71,7 @@ def show_depth(warp = False):
             params.filterByInertia = False
 
 
-            detector = cv2.SimpleBlobDetector(params)
+            detector = cv2.SimpleBlobDetector_create(params)
             keypoints = detector.detect(depth)
             print("Detected " + str(len(keypoints)))
             for keypoint in keypoints:
@@ -82,32 +82,32 @@ def show_depth(warp = False):
                 cv2.circle(image, (cX, cY), 15, (255, 0, 255), -1)
                 cv2.putText(image, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
 
-                if(last_note >= 0):
-                    # Already playing a note
-                    if(cY > y_threshold):
-                        # Center is below line, stop playing
-                        client.publish("note-off", last_note)
-                        last_note = -1
-                    else:
-                        # Center is still above the line, leave current note
-                        client.publish("note-off", last_note)
-                        note = int(map_range((0, w), (88, 0), cX))
-                        # Only change if we've moved by 2 semitones
-                        if(abs(note - last_note) > 2):
-                            last_note = note
-                            client.publish("note-on", note)
-                        pass
-                else:
-                    # No active note
-                    if(cY < y_threshold):
-                        # Center is above the line, start a new note
-                        note = int(map_range((0, w), (88, 0), cX))
-                        last_note = note
-                        client.publish("note-on", note)
+                # if(last_note >= 0):
+                #     # Already playing a note
+                #     if(cY > y_threshold):
+                #         # Center is below line, stop playing
+                #         client.publish("note-off", last_note)
+                #         last_note = -1
+                #     else:
+                #         # Center is still above the line, leave current note
+                #         client.publish("note-off", last_note)
+                #         note = int(map_range((0, w), (88, 0), cX))
+                #         # Only change if we've moved by 2 semitones
+                #         if(abs(note - last_note) > 2):
+                #             last_note = note
+                #             client.publish("note-on", note)
+                #         pass
+                # else:
+                #     # No active note
+                #     if(cY < y_threshold):
+                #         # Center is above the line, start a new note
+                #         note = int(map_range((0, w), (88, 0), cX))
+                #         last_note = note
+                #         client.publish("note-on", note)
 
-                    else:
-                        # Center is below the line, don't start anything
-                        pass
+                #     else:
+                #         # Center is below the line, don't start anything
+                #         pass
 
 
         if(warp):
@@ -157,7 +157,7 @@ cv2.createTrackbar('depth',     'Depth', current_depth, 2048, change_depth)
 
 print('Press ESC in window to stop')
 
-init_mqtt()
+# init_mqtt()
 
 while 1:
     show_depth()
