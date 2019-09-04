@@ -6,8 +6,8 @@ import numpy as np
 import random
 import paho.mqtt.client as mqtt
 
-threshold = 400
-current_depth = 260
+threshold = 177
+current_depth = 574
 last_image = None
 scale = 1.20
 client = None
@@ -39,6 +39,21 @@ def show_depth(warp = False):
                                  depth <= current_depth + threshold)
     depth = depth.astype(np.uint8)
     depth_rgb = cv2.cvtColor(depth, cv2.COLOR_GRAY2RGB)
+    # kernel = np.ones((9,9), np.uint8) 
+
+    # depth_rgb = cv2.dilate(depth_rgb, kernel, iterations=1)
+    # depth_rgb = cv2.erode(depth_rgb, kernel, iterations=1)
+    
+    hSobel = cv2.Sobel(depth_rgb, cv2.CV_32F, 0, 1, -1)
+    vSobel = cv2.Sobel(depth_rgb, cv2.CV_32F, 1, 0, -1)
+
+    depth_rgb = cv2.add(hSobel, vSobel)
+
+    depth_rgb = cv2.convertScaleAbs(depth_rgb)
+    depth_rgb = cv2.GaussianBlur(depth_rgb, (3, 3), 0)
+    ret, depth_rgb = cv2.threshold(depth_rgb, 80, 255, cv2.THRESH_BINARY)
+    # depth_rgb_mask = cv2.cvtColor(depth, cv2.COLOR_GRAY2RGB)
+    # depth_rgb = cv2.bitwise_and(rgb,rgb,mask = depth)
     h, w = depth.shape[:2]
 
     # img = cv2.GaussianBlur(depth_rgb,(3,3),0)
@@ -54,6 +69,7 @@ def show_depth(warp = False):
 
         color_scale = cv2.bitwise_and(color_img, scaled)
         image = cv2.bitwise_or(color_scale, depth_rgb)
+        # image = depth_rgb
 
         # overlay = cv2.bitwise_xor(rgb, image)
         # cv2.line(image, (0, y_threshold), (w, y_threshold), (0, 255, 0), 3)
