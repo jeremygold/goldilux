@@ -9,7 +9,7 @@ import paho.mqtt.client as mqtt
 threshold = 400
 current_depth = 260
 last_image = None
-scale = 1.10
+scale = 1.20
 client = None
 y_threshold = 300
 last_note = -1
@@ -41,6 +41,9 @@ def show_depth(warp = False):
     depth_rgb = cv2.cvtColor(depth, cv2.COLOR_GRAY2RGB)
     h, w = depth.shape[:2]
 
+    # img = cv2.GaussianBlur(depth_rgb,(3,3),0)
+    # laplacian = cv2.Laplacian(img,cv2.CV_8U)
+
     if(not last_image is None):
         x_offset = int(w * (scale - 1.0) / 2.0)
         y_offset = int(h * (scale - 1.0) / 2.0)
@@ -53,11 +56,11 @@ def show_depth(warp = False):
         image = cv2.bitwise_or(color_scale, depth_rgb)
 
         # overlay = cv2.bitwise_xor(rgb, image)
-        cv2.line(image, (0, y_threshold), (w, y_threshold), (0, 255, 0), 3)
+        # cv2.line(image, (0, y_threshold), (w, y_threshold), (0, 255, 0), 3)
 
         # overlay_with_keypoints = cv2.drawKeypoints(overlay, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-        if True:
+        if False:
             params = cv2.SimpleBlobDetector_Params()
             params.minThreshold = 0
             params.maxThreshold = 255
