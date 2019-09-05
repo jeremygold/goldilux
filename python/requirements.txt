@@ -1,2 +1,3 @@
-python-rtmidi
 paho-mqtt
+opencv-python
+cython
