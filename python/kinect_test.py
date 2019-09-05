@@ -161,15 +161,13 @@ def warp(depth, rgb):
     return warped, rgb
 
 
-def run_pipeline(warp = False):
+def run_pipeline(pipeline):
     global last_image
 
     depth, rgb = capture_frame()
-    depth, rgb = depth_threshold(depth, rgb)
-    depth, rgb = dilate_erode(depth, rgb)
-    depth, rgb = sobel(depth, rgb)
-    # depth, rgb = mask_rgb(depth, rgb)
-    depth, rgb = color_tunnel(depth, rgb)
+
+    for step in pipeline:
+        depth, rgb = step(depth, rgb)
 
     cv2.imshow('Depth', depth)
     last_image = depth
@@ -196,7 +194,14 @@ print('Press ESC in window to stop')
 
 # init_mqtt()
 
+pipeline = [
+    depth_threshold,
+    dilate_erode,
+    sobel,
+    color_tunnel
+]
+
 while 1:
-    run_pipeline()
+    run_pipeline(pipeline)
     if cv2.waitKey(10) == 27:
         break
