@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
+
 import freenect
 import cv2
 import frame_convert2
 import numpy as np
 import random
-import paho.mqtt.client as mqtt
 
 threshold = 177
 current_depth = 574
 last_image = None
 scale = 1.20
-client = None
 y_threshold = 300
-last_note = -1
 
 def change_threshold(value):
     global threshold
@@ -81,9 +79,6 @@ def color_tunnel(depth, rgb):
     return depth, rgb
 
 def blob_detect(depth, rgb):
-    global client
-    global last_note
-
     if False:
         params = cv2.SimpleBlobDetector_Params()
         params.minThreshold = 0
@@ -170,36 +165,23 @@ def run_pipeline(pipeline):
 
     cv2.imshow('Depth', depth)
 
-def on_connect(client, userdata, flags, rc):
-    print("Connected with result code: " + str(rc))
 
-def init_mqtt():
-    global client
-    client = mqtt.Client()
-    client.on_connect = on_connect
-    # At home
-    client.connect('192.168.1.105', 1883, 60)
-    # At work
-    # client.connect('192.168.5.184', 1883, 60)
-    client.loop_start()
+def main():
+    cv2.namedWindow('Depth')
+    cv2.createTrackbar('threshold', 'Depth', threshold,     500,  change_threshold)
+    cv2.createTrackbar('depth',     'Depth', current_depth, 2048, change_depth)
+    print('Press ESC in window to stop')
 
-cv2.namedWindow('Depth')
-# cv2.namedWindow('Video')
-cv2.createTrackbar('threshold', 'Depth', threshold,     500,  change_threshold)
-cv2.createTrackbar('depth',     'Depth', current_depth, 2048, change_depth)
+    pipeline = [
+        depth_threshold,
+        dilate_erode,
+        sobel,
+        color_tunnel
+    ]
 
-print('Press ESC in window to stop')
+    while 1:
+        run_pipeline(pipeline)
+        if cv2.waitKey(10) == 27:
+            break
 
-# init_mqtt()
-
-pipeline = [
-    depth_threshold,
-    dilate_erode,
-    sobel,
-    color_tunnel
-]
-
-while 1:
-    run_pipeline(pipeline)
-    if cv2.waitKey(10) == 27:
-        break
+main()
