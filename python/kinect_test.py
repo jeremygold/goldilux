@@ -77,6 +77,7 @@ def color_tunnel(depth, rgb):
         color_scale = cv2.bitwise_and(color_img, scaled)
         depth = cv2.bitwise_or(color_scale, depth)
 
+    last_image = depth
     return depth, rgb
 
 def blob_detect(depth, rgb):
@@ -162,15 +163,12 @@ def warp(depth, rgb):
 
 
 def run_pipeline(pipeline):
-    global last_image
-
     depth, rgb = capture_frame()
 
     for step in pipeline:
         depth, rgb = step(depth, rgb)
 
     cv2.imshow('Depth', depth)
-    last_image = depth
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code: " + str(rc))
