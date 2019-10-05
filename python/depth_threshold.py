@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
 
-threshold = 177
-current_depth = 574
+threshold = 110
+current_depth = 0
+# threshold = 177
+# current_depth = 574
 y_threshold = 300
 
 def change_threshold(value):
