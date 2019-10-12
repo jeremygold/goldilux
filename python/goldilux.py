@@ -14,6 +14,7 @@ from mask_rgb import mask_rgb
 from blob_detect import blob_detect
 from depth_threshold import *
 from warp import warp
+from lasers import lasers
 
 mode = 'Webcam'
 
@@ -36,14 +37,15 @@ def main():
         # blob_detect,
         # dilate_erode,
         sobel,
-        color_tunnel,
-        warp
+        # color_tunnel,
+        lasers
+        # warp
     ]
 
 
     if mode == 'Webcam':
         capture = WebcamCapture()
-    else: 
+    else:
         capture = KinectCapture()
 
     while 1:
