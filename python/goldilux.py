@@ -8,6 +8,7 @@ from webcam_capture import WebcamCapture
 from kinect_capture import KinectCapture
 
 from dilate_erode import dilate_erode
+from hflip import hflip
 from color_tunnel import color_tunnel
 from sobel import sobel
 from mask_rgb import mask_rgb
@@ -39,6 +40,7 @@ def main():
 
     pipeline = [
         depth_threshold,
+        hflip,
         dilate_erode,
         blob_detect,
         sobel,

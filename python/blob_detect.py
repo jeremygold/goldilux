@@ -32,9 +32,8 @@ def blob_detect(depth, rgb, model):
 
         for i in range(0, model["num_strings"] + 1):
             laser_x = float(i) * w / model["num_strings"]
-            if cY < 200 and abs(cX - laser_x) < 10:
+            if cY < 200 and abs(cX - laser_x) < 20:
                 model["active_string"] = i
-                print("Active String: " + str(i))
 
         # if(last_note >= 0):
         #     # Already playing a note
