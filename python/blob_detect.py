@@ -1,6 +1,7 @@
 import cv2
 
-def blob_detect(depth, rgb):
+def blob_detect(depth, rgb, model):
+    global active_string
     h, w = depth.shape[:2]
 
     params = cv2.SimpleBlobDetector_Params()
@@ -17,7 +18,7 @@ def blob_detect(depth, rgb):
 
     detector = cv2.SimpleBlobDetector_create(params)
     keypoints = detector.detect(depth)
-    print("Detected " + str(len(keypoints)))
+    # print("Detected " + str(len(keypoints)))
     for keypoint in keypoints:
         cX = int(keypoint.pt[0])
         cY = int(keypoint.pt[1])
@@ -28,6 +29,12 @@ def blob_detect(depth, rgb):
         location = str(cX) + "," + str(cY)
         cv2.circle(depth, (cX, cY), 10, (255, 0, 255), -1)
         cv2.putText(depth, location, (cX-25, cY-25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+
+        for i in range(0, model["num_strings"] + 1):
+            laser_x = float(i) * w / model["num_strings"]
+            if cY < 200 and abs(cX - laser_x) < 10:
+                model["active_string"] = i
+                print("Active String: " + str(i))
 
         # if(last_note >= 0):
         #     # Already playing a note

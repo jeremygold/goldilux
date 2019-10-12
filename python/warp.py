@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def warp(depth, rgb):
+def warp(depth, rgb, model):
     h, w = depth.shape[:2]
     src = np.array([
         [0,0],

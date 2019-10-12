@@ -5,7 +5,7 @@ import random
 last_image = None
 scale = 1.10
 
-def color_tunnel(depth, rgb):
+def color_tunnel(depth, rgb, model):
     global last_image
 
     if(not last_image is None):

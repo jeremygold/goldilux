@@ -15,7 +15,7 @@ def change_depth(value):
     global current_depth
     current_depth = value
 
-def depth_threshold(depth, rgb):
+def depth_threshold(depth, rgb, model):
     global threshold
     global current_depth
     depth = 255 * np.logical_and(depth >= current_depth - threshold,

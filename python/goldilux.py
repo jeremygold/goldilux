@@ -18,15 +18,20 @@ from lasers import lasers
 
 mode = 'Webcam'
 
-def run_pipeline(pipeline, capture):
+def run_pipeline(pipeline, capture, model):
     depth, rgb = capture.get_frame()
 
     for step in pipeline:
-        depth, rgb = step(depth, rgb)
+        depth, rgb = step(depth, rgb, model)
 
     cv2.imshow('Depth', depth)
 
 def main():
+    model = {
+        "num_strings": 16, 
+        "active_string": 9
+        }
+
     cv2.namedWindow('Depth')
     cv2.createTrackbar('threshold', 'Depth', threshold,     500,  change_threshold)
     cv2.createTrackbar('depth',     'Depth', current_depth, 2048, change_depth)
@@ -34,8 +39,8 @@ def main():
 
     pipeline = [
         depth_threshold,
-        # blob_detect,
-        # dilate_erode,
+        dilate_erode,
+        blob_detect,
         sobel,
         # color_tunnel,
         lasers
@@ -49,7 +54,7 @@ def main():
         capture = KinectCapture()
 
     while 1:
-        run_pipeline(pipeline, capture)
+        run_pipeline(pipeline, capture, model)
         if cv2.waitKey(10) == 27:
             break
 
